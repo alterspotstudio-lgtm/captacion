@@ -1967,6 +1967,35 @@ function updateDiagResult() {
 
 // Init
 updateChecklistProgress();
+</script>
+
+<!-- ════ PANTALLA EXPEDIENTE REGISTRADO ════ -->
+<div class="expediente-screen" id="expedienteScreen">
+  <div class="expediente-inner">
+    <div class="exp-check">✓</div>
+    <div class="exp-tag">Expediente registrado</div>
+    <div class="exp-title">TU PROCESO<br><span>ESTÁ LISTO.</span></div>
+    <div class="exp-separator"></div>
+    <div class="exp-body">
+      <strong>Enrique ya tiene toda la información para posicionar tu propiedad de forma estratégica.</strong>
+    </div>
+    <div class="exp-result-box">
+      <div class="exp-result-label">Resultado de tu diagnóstico fiscal</div>
+      <div class="exp-result-status" id="expStatus" style="color:rgba(255,255,255,0.2);">—</div>
+      <div class="exp-result-text" id="expText">—</div>
+    </div>
+    <div class="exp-neri">ENRIQUE NERI · CUERNAVACA</div>
+  </div>
+</div>
+
+<!-- ════ BARRA CTA FLOTANTE ════ -->
+<div class="bottom-cta-bar" id="checklistCta">
+  <button class="bottom-cta-btn" onclick="irADiagnostico()">Continuar con diseño fiscal →</button>
+</div>
+<div class="bottom-cta-bar" id="diagCta">
+  <button class="bottom-cta-btn gold-filled" id="btnFinalizar" onclick="completarExpediente()">Completar mi expediente →</button>
+</div>
+
 <script>
 // =======================
 // CONFIGURACIÓN WEBHOOK
@@ -1982,11 +2011,14 @@ function irADiagnostico() {
 }
 
 function showSectionConCTA(id) {
+  // Ocultar todo
   document.getElementById('checklistCta').style.display = 'none';
   document.getElementById('diagCta').style.display = 'none';
+  // Mostrar el correcto
   if (id === 'checklist') document.getElementById('checklistCta').style.display = 'block';
 }
 
+// Override showSection para manejar CTAs
 const _showSectionOriginal = showSection;
 showSection = function(id) {
   _showSectionOriginal(id);
@@ -1994,6 +2026,7 @@ showSection = function(id) {
   if (id !== 'diagnostico') document.getElementById('diagCta').style.display = 'none';
 };
 
+// Al cargar, si viene desde presentacion y ya está en checklist, mostrar CTA
 document.addEventListener('DOMContentLoaded', () => {
   const activeSection = document.querySelector('.section.active');
   if (activeSection && activeSection.id === 'checklist') {
@@ -2009,37 +2042,29 @@ let yaInteractuo = false;
 function dispararInteraccion() {
   if (yaInteractuo) return;
   yaInteractuo = true;
-
   const payload = {
-    nombre_completo: document.getElementById('nombre').value || "Sin nombre aún",
-    telefono: document.getElementById('telefono').value || "",
-    tipo: "Vendedor",
-    estado: "Interactuando",
-    score: 25,
-    fuente: "Vercel - Formulario",
-    fecha: new Date().toLocaleDateString('es-MX', { day:'2-digit', month:'long', year:'numeric' }),
-    hora: new Date().toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' })
+    Nombre: document.getElementById('nombre').value || "Interesado",
+    Teléfono: document.getElementById('telefono').value || "",
+    Estado: "Interactuando",
+    "Lead Score": 25
   };
-
-  fetch(WEBHOOK, {
-    method:'POST',
-    body: JSON.stringify(payload),
-    mode:'no-cors'
-  }).catch(e => console.error('Webhook interacción error:', e));
+  fetch(WEBHOOK, { method:'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), mode:'no-cors' })
+    .catch(e => console.error('Webhook interacción error:', e));
 }
 
 // =======================
-// ACTUALIZAR toggleDiag
+// ACTUALIZAR toggleDiag para activar CTA + form + webhook 1
 // =======================
 const _toggleDiagOriginal = toggleDiag;
 toggleDiag = function(el, idx) {
   _toggleDiagOriginal(el, idx);
-
   const answered = diagStates.filter(s => s !== null).length;
-
   if (answered >= 1) {
+    // Mostrar formulario de nombre
     document.getElementById('diagForm').classList.add('visible');
+    // Mostrar botón Completar
     document.getElementById('diagCta').style.display = 'block';
+    // Disparar webhook 1 (solo primera vez)
     dispararInteraccion();
   } else {
     document.getElementById('diagForm').classList.remove('visible');
@@ -2051,45 +2076,33 @@ toggleDiag = function(el, idx) {
 // COMPLETAR EXPEDIENTE
 // =======================
 function completarExpediente() {
-
   const nombre = document.getElementById('nombre').value.trim();
-
   if (!nombre) {
     document.getElementById('nombre').focus();
     document.getElementById('nombre').style.borderColor = 'rgba(255,100,100,0.7)';
-    setTimeout(() => {
-      document.getElementById('nombre').style.borderColor = 'rgba(198,168,107,0.25)';
-    }, 2000);
+    setTimeout(() => document.getElementById('nombre').style.borderColor = 'rgba(198,168,107,0.25)', 2000);
     return;
   }
 
-  const telefono = document.getElementById('telefono').value || "";
-
-  // =======================
-  // UI FINAL
-  // =======================
+  // Copiar resultado al expediente
   const status = document.getElementById('diagStatus').textContent;
   const statusColor = document.getElementById('diagStatus').style.color;
   const text = document.getElementById('diagText').textContent;
-
   document.getElementById('expStatus').textContent = status;
   document.getElementById('expStatus').style.color = statusColor;
   document.getElementById('expText').textContent = text;
 
+  // Ocultar todo y mostrar pantalla final
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-
   document.getElementById('checklistCta').style.display = 'none';
   document.getElementById('diagCta').style.display = 'none';
   document.getElementById('slideDots').style.display = 'none';
   document.getElementById('scrollHint').style.display = 'none';
-
   document.getElementById('expedienteScreen').classList.add('active');
   window.scrollTo(0, 0);
 
-  // =======================
-  // DATOS COMPLETOS
-  // =======================
+  // Webhook 2 — Finalización
   const respuestas = {
     'INE coincide con escritura':              diagStates[0]===true?'Sí':diagStates[0]===false?'No':'Sin responder',
     'Dirección en escritura y predial':        diagStates[1]===true?'Sí':diagStates[1]===false?'No':'Sin responder',
@@ -2097,39 +2110,23 @@ function completarExpediente() {
     'Ha vendido propiedad últimos 3 años':     diagStates[3]===true?'Sí':diagStates[3]===false?'No':'Sin responder',
     'Propiedad es casa habitación':            diagStates[4]===true?'Sí':diagStates[4]===false?'No':'Sin responder',
   };
-
   const payload = {
-    nombre_completo: nombre,
-    telefono: telefono,
-    tipo: "Vendedor",
-    estado: "Lead nuevo",
-    score: 75,
-    fuente: "Vercel - Formulario",
-    resultado: status,
-    descripcion: text,
-    respuestas: respuestas,
-    fecha: new Date().toLocaleDateString('es-MX', { day:'2-digit', month:'long', year:'numeric' }),
-    hora: new Date().toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' }),
+    Nombre: nombre,
+    Teléfono: document.getElementById('telefono').value || "",
+    Estado: "Lead nuevo",
+    "Lead Score": 75
   };
-
-  // =======================
-  // WEBHOOK FINAL (PRO)
-  // =======================
+  
+  // Webhook único — envía datos a Zapier
   fetch(WEBHOOK, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   }).catch(e => console.error('Webhook error:', e));
 
-  // =======================
-  // REDIRECCIÓN WHATSAPP
-  // =======================
+  // Redirigir a WhatsApp automáticamente tras 1.5s
   setTimeout(() => {
-    const msg = encodeURIComponent(
-      'Hola Enrique, acabo de completar mi diagnóstico fiscal. Mi nombre es ' +
-      nombre + '. Resultado: ' + status
-    );
-
+    const msg = encodeURIComponent('Hola Enrique, acabo de completar mi diagnóstico fiscal. Mi nombre es ' + nombre + '. Resultado: ' + status);
     window.location.href = 'https://wa.me/527779855687?text=' + msg;
   }, 1500);
 }

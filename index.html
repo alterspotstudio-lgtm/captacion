@@ -1998,10 +1998,19 @@ updateChecklistProgress();
 
 <script>
 // =======================
-// CONFIGURACIÓN WEBHOOKS
+// CONFIGURACIÓN WEBHOOK
 // =======================
-const WEBHOOK_INTERACCION = "https://hooks.zapier.com/hooks/catch/362688687/tV1LqKaK1b8jG2nP9xY3mQ/";
-const WEBHOOK_FINALIZAR   = "https://hooks.zapier.com/hooks/catch/362688684/tV1LqKaK1b8jG2nP9xY3mQ/";
+const WEBHOOK = "https://hooks.zapier.com/hooks/catch/362688687/tV1LqKaK1b8jG2nP9xY3mQ/";
+
+// =======================
+// INTERACCIÓN (primera vez que toca un checkbox)
+// =======================
+let yaInteractuo = false;
+
+function dispararInteraccion() {
+  if (yaInteractuo) return;
+  yaInteractuo = true;
+}
 
 // =======================
 // NAVEGACIÓN CON CTAs
@@ -2053,8 +2062,8 @@ function dispararInteraccion() {
     fecha: new Date().toLocaleDateString('es-MX', { day:'2-digit', month:'long', year:'numeric' }),
     hora: new Date().toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' })
   };
-  fetch(WEBHOOK_INTERACCION, { method:'POST', body: JSON.stringify(payload), mode:'no-cors' })
-    .catch(e => console.error('Webhook 1 error:', e));
+  fetch(WEBHOOK, { method:'POST', body: JSON.stringify(payload), mode:'no-cors' })
+    .catch(e => console.error('Webhook interacción error:', e));
 }
 
 // =======================
@@ -2128,8 +2137,12 @@ function completarExpediente() {
     fecha:              new Date().toLocaleDateString('es-MX', { day:'2-digit', month:'long', year:'numeric' }),
     hora:               new Date().toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' }),
   };
-  fetch(WEBHOOK_FINALIZAR, { method:'POST', body: JSON.stringify(payload), mode:'no-cors' })
-    .catch(e => console.error('Webhook 2 error:', e));
+  // Webhook único — envía nombre y teléfono
+  fetch(WEBHOOK, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nombre, telefono: document.getElementById('telefono').value || "" })
+  }).catch(e => console.error('Webhook error:', e));
 
   // Redirigir a WhatsApp automáticamente tras 1.5s
   setTimeout(() => {

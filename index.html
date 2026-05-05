@@ -2096,26 +2096,6 @@ function completarExpediente() {
     window.location.href = 'https://wa.me/527779855687?text=' + msg;
   }, 1500);
 }
-</script>onst payload = {
-    Nombre: nombre,
-    Teléfono: document.getElementById('telefono').value || "",
-    Estado: "Lead nuevo",
-    "Lead Score": 75
-  };
-  
-  // Webhook único — envía datos a Zapier
-  fetch(WEBHOOK, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  }).catch(e => console.error('Webhook error:', e));
-
-  // Redirigir a WhatsApp automáticamente tras 1.5s
-  setTimeout(() => {
-    const msg = encodeURIComponent('Hola Enrique, acabo de completar mi diagnóstico fiscal. Mi nombre es ' + nombre + '. Resultado: ' + status);
-    window.location.href = 'https://wa.me/527779855687?text=' + msg;
-  }, 1500);
-}
 </script>
 
 </body>

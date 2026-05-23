@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="theme-color" content="#0B0B0B">
 <meta name="description" content="Sistema de venta elite para propiedades en Cuernavaca. Método Neri.">
-<title>ENRIQUE NERI — Sistema de Venta Elite</title>
-<meta property="og:title" content="ENRIQUE NERI — Sistema de Venta Elite">
-<meta property="og:description" content="No vendo propiedades. Dirijo decisiones inteligentes. Cuernavaca · Century 21 Haus.">
+<title>Método Neri — Portal de Captación</title>
+<meta property="og:title" content="Método Neri — Portal de Captación">
+<meta property="og:description" content="Diagnóstico de venta para propietarios en Cuernavaca · Century 21 Haus.">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="es_MX">
 <meta name="twitter:card" content="summary_large_image">
@@ -696,9 +696,19 @@ body::before{content:"";position:fixed;inset:0;background-image:url("data:image/
 </div>
 
 <script>
-// ── CONFIG ──
-const WEBHOOK   = ""; // pega tu webhook de Zapier aquí
-const WA_NUM    = "527779855687";
+// ╔══════════════════════════════════════════════════════════╗
+// ║     MÉTODO NERI — PORTAL DE CAPTACIÓN VENDEDORES         ║
+// ║   ⚡ SOLO EDITA ESTE BLOQUE PARA CADA ASESOR             ║
+// ║   Todo lo demás del archivo NO se toca.                  ║
+// ╚══════════════════════════════════════════════════════════╝
+
+const WEBHOOK = "https://hook.us2.make.com/vx9xx6qdg2dlldvdgfmvwxi54ibwwmcz";
+// URL del Custom Webhook del Escenario 2 en Make.
+// Para obtenerla: Make → Escenario 2 Vendedores → módulo Webhooks → copiar URL.
+// Si aún no tienes Make configurado deja vacío: ""
+
+const WA_NUM = "527779855687";
+// Número del asesor con código de país (52 = México). No agregar espacios ni guiones.
 
 // ── SCORING ──
 // 20 items × 5% = 100%
@@ -904,79 +914,71 @@ function completar(){
   document.getElementById("expScreen").classList.add("active");
   window.scrollTo(0,0);
 
-  const docNames = ["Escrituras","Predial","Identificación oficial","Libertad de gravamen","Agua/Luz"];
   const payload = {
     nombre, telefono,
-    tipo_propiedad: document.querySelector("#sg_tipo .sel-dot.on")?.nextElementSibling?.querySelector(".sel-main")?.textContent||"",
+    tipo_propiedad: document.querySelector("#sg_tipo .sel-dot.on")?.parentElement?.querySelector(".sel-main")?.textContent||"",
     zona: document.getElementById("f_zona").value.trim(),
-    precio_estimado: document.querySelector("#sg_precio .sel-dot.on")?.nextElementSibling?.querySelector(".sel-main")?.textContent||"",
-    habitaciones: nv.nv_hab, banos: nv.nv_ban, estacionamientos: nv.nv_est,
-    tiempo_venta: document.querySelector("#sg_tiempo .sel-dot.on")?.nextElementSibling?.querySelector(".sel-main")?.textContent||"",
-    razon_venta: document.querySelector("#sg_razon .sel-dot.on")?.nextElementSibling?.querySelector(".sel-main")?.textContent||"",
+    precio_estimado: document.querySelector("#sg_precio .sel-dot.on")?.parentElement?.querySelector(".sel-main")?.textContent||"",
+    habitaciones: nv.nv_hab,
+    banos: nv.nv_ban,
+    estacionamientos: nv.nv_est,
+    tiempo_venta: document.querySelector("#sg_tiempo .sel-dot.on")?.parentElement?.querySelector(".sel-main")?.textContent||"",
+    razon_venta: document.querySelector("#sg_razon .sel-dot.on")?.parentElement?.querySelector(".sel-main")?.textContent||"",
     documentos: [0,1,2,3,4].filter(i=>score["doc"+i]).map(i=>docNames[i]).join(", ")||"Ninguno",
     diagnostico_fiscal: status,
     diagnostico_detalle: text,
     progreso_expediente: calcPct()+"%",
-    estado: "Lead nuevo",
+    estado: "Lead Nuevo",
     fuente: "Sistema Neri"
   };
 
   if(WEBHOOK){
     fetch(WEBHOOK,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)})
-      .catch(e=>console.warn("Webhook:",e));
+      .catch(e=>console.warn("Make webhook error:",e));
   }
 
   // Folio
   currentFolio = generateFolio();
   document.getElementById("folioNumber").textContent = currentFolio;
 
-  // Email
-  var docNamesList = ["Escrituras","Predial","Identificación oficial","Libertad de gravamen","Agua/Luz"];
-  var docsStr = [0,1,2,3,4].filter(function(i){ return score["doc"+i]; }).map(function(i){ return docNamesList[i]; }).join(", ") || "Ninguno";
-  var zona    = document.getElementById("f_zona").value.trim();
-  var tipo    = (document.querySelector("#sg_tipo .sel-dot.on") || {parentElement:{nextElementSibling:{querySelector:function(){return null;}}}});
-  var tipoTxt = document.querySelector("#sg_tipo .sel-dot.on") ? document.querySelector("#sg_tipo .sel-dot.on").parentElement.querySelector(".sel-main").textContent : "No especificado";
-  var precioTxt = document.querySelector("#sg_precio .sel-dot.on") ? document.querySelector("#sg_precio .sel-dot.on").parentElement.querySelector(".sel-main").textContent : "No especificado";
-  var tiempoTxt = document.querySelector("#sg_tiempo .sel-dot.on") ? document.querySelector("#sg_tiempo .sel-dot.on").parentElement.querySelector(".sel-main").textContent : "No especificado";
-  var razonTxt  = document.querySelector("#sg_razon .sel-dot.on")  ? document.querySelector("#sg_razon .sel-dot.on").parentElement.querySelector(".sel-main").textContent  : "No especificado";
-
+  // Email de respaldo
   var emailBody = [
-    "EXPEDIENTE RECIBIDO - SISTEMA NERI",
+    "EXPEDIENTE RECIBIDO - MÉTODO NERI",
     "Folio: " + currentFolio,
     "================================",
     "",
     "PROPIETARIO",
-    "Nombre: " + nombre,
-    "Telefono: " + telefono,
+    "Nombre: " + payload.nombre,
+    "Telefono: " + payload.telefono,
     "",
     "PROPIEDAD",
-    "Tipo: " + tipoTxt,
-    "Zona: " + (zona || "No especificada"),
-    "Precio estimado: " + precioTxt,
-    "Habitaciones: " + nv.nv_hab,
-    "Banos: " + nv.nv_ban,
-    "Estacionamientos: " + nv.nv_est,
+    "Tipo: " + (payload.tipo_propiedad||"No especificado"),
+    "Zona: " + (payload.zona||"No especificada"),
+    "Precio estimado: " + (payload.precio_estimado||"No especificado"),
+    "Habitaciones: " + payload.habitaciones,
+    "Banos: " + payload.banos,
+    "Estacionamientos: " + payload.estacionamientos,
     "",
     "ESCENARIO DE VENTA",
-    "Tiempo: " + tiempoTxt,
-    "Razon: " + razonTxt,
+    "Tiempo: " + (payload.tiempo_venta||"No especificado"),
+    "Razon: " + (payload.razon_venta||"No especificado"),
     "",
     "DOCUMENTOS DISPONIBLES",
-    docsStr,
+    payload.documentos,
     "",
     "DIAGNOSTICO FISCAL",
-    "Estado: " + status,
-    "Detalle: " + text,
+    "Estado: " + payload.diagnostico_fiscal,
+    "Detalle: " + payload.diagnostico_detalle,
     "",
-    "PROGRESO: " + calcPct() + "%",
+    "PROGRESO: " + payload.progreso_expediente,
     "Fuente: Sistema Neri - Cuernavaca"
   ].join("\n");
 
-  sendEmail(nombre, telefono, emailBody);
+  sendEmail(payload.nombre, payload.telefono, emailBody);
 
   setTimeout(function(){
     var msg = encodeURIComponent(
-      "Hola Enrique, soy " + nombre + ". Folio " + currentFolio + ". Quiero avanzar."
+      "Hola, soy " + payload.nombre + ". Folio " + currentFolio + ". Quiero avanzar con la venta de mi propiedad."
     );
     window.location.href = "https://wa.me/" + WA_NUM + "?text=" + msg;
   }, 1800);

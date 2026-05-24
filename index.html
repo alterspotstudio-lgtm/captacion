@@ -892,7 +892,7 @@ function updDiag(){
 }
 
 // ── COMPLETAR ──
-async function completar(){
+function completar(){
   // Meta Pixel: dispara evento Lead al completar el expediente
   try{ if(typeof fbq!=="undefined"){ fbq("track","Lead"); } }catch(e){}
   const nombre   = document.getElementById("f_nombre").value.trim();
@@ -920,38 +920,55 @@ async function completar(){
   document.getElementById("expScreen").classList.add("active");
   window.scrollTo(0,0);
 
-  const payload = {
-    nombre, telefono,
+  var now = new Date();
+
+  // ── Enviar a Make vía FormData (mismo patrón que landing de compradores) ──
+  if(WEBHOOK){
+    var fd = new FormData();
+    fd.append('nombre',               nombre);
+    fd.append('telefono',             telefono);
+    fd.append('tipo',                 'Vendedor');
+    fd.append('fuente',               'Sistema Neri');
+    fd.append('fecha',                now.toLocaleDateString('es-MX'));
+    fd.append('hora',                 now.toLocaleTimeString('es-MX'));
+    fd.append('estado',               'Lead Nuevo');
+    fd.append('tipo_propiedad',       document.querySelector("#sg_tipo .sel-dot.on")?.parentElement?.querySelector(".sel-main")?.textContent||"");
+    fd.append('zona',                 document.getElementById("f_zona").value.trim());
+    fd.append('precio_estimado',      document.querySelector("#sg_precio .sel-dot.on")?.parentElement?.querySelector(".sel-main")?.textContent||"");
+    fd.append('habitaciones',         String(nv.nv_hab));
+    fd.append('banos',                String(nv.nv_ban));
+    fd.append('estacionamientos',     String(nv.nv_est));
+    fd.append('tiempo_venta',         document.querySelector("#sg_tiempo .sel-dot.on")?.parentElement?.querySelector(".sel-main")?.textContent||"");
+    fd.append('razon_venta',          document.querySelector("#sg_razon .sel-dot.on")?.parentElement?.querySelector(".sel-main")?.textContent||"");
+    fd.append('documentos',           [0,1,2,3,4].filter(i=>score["doc"+i]).map(i=>docNames[i]).join(", ")||"Ninguno");
+    fd.append('diagnostico_fiscal',   status);
+    fd.append('diagnostico_detalle',  text);
+    fd.append('progreso_expediente',  calcPct()+"%");
+
+    fetch(WEBHOOK, {
+      method: 'POST',
+      body: fd,
+      keepalive: true
+    }).then(function(r){
+      if(!r.ok) console.warn("Make webhook respondió con status:", r.status);
+      else console.log("Make webhook OK");
+    }).catch(function(e){ console.warn("Make webhook error:", e); });
+  }
+
+  // payload para uso interno (folio, email, WhatsApp)
+  var payload = {
+    nombre: nombre, telefono: telefono,
     tipo_propiedad: document.querySelector("#sg_tipo .sel-dot.on")?.parentElement?.querySelector(".sel-main")?.textContent||"",
     zona: document.getElementById("f_zona").value.trim(),
     precio_estimado: document.querySelector("#sg_precio .sel-dot.on")?.parentElement?.querySelector(".sel-main")?.textContent||"",
-    habitaciones: nv.nv_hab,
-    banos: nv.nv_ban,
-    estacionamientos: nv.nv_est,
+    habitaciones: nv.nv_hab, banos: nv.nv_ban, estacionamientos: nv.nv_est,
     tiempo_venta: document.querySelector("#sg_tiempo .sel-dot.on")?.parentElement?.querySelector(".sel-main")?.textContent||"",
     razon_venta: document.querySelector("#sg_razon .sel-dot.on")?.parentElement?.querySelector(".sel-main")?.textContent||"",
     documentos: [0,1,2,3,4].filter(i=>score["doc"+i]).map(i=>docNames[i]).join(", ")||"Ninguno",
-    diagnostico_fiscal: status,
-    diagnostico_detalle: text,
+    diagnostico_fiscal: status, diagnostico_detalle: text,
     progreso_expediente: calcPct()+"%",
-    estado: "Lead Nuevo",
-    fuente: "Sistema Neri"
+    estado: "Lead Nuevo", fuente: "Sistema Neri"
   };
-
-  // ── Enviar a Make (esperamos respuesta antes de redirigir) ──
-  if(WEBHOOK){
-    try{
-      const resp = await fetch(WEBHOOK,{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify(payload),
-        keepalive:true  // garantiza que la petición termine aunque el navegador navegue
-      });
-      if(!resp.ok) console.warn("Make webhook respondió con status:",resp.status);
-    }catch(e){
-      console.warn("Make webhook error:",e);
-    }
-  }
 
   // Folio
   currentFolio = generateFolio();

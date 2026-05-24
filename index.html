@@ -892,7 +892,7 @@ function updDiag(){
 }
 
 // ── COMPLETAR ──
-function completar(){
+async function completar(){
   // Meta Pixel: dispara evento Lead al completar el expediente
   try{ if(typeof fbq!=="undefined"){ fbq("track","Lead"); } }catch(e){}
   const nombre   = document.getElementById("f_nombre").value.trim();
@@ -938,9 +938,19 @@ function completar(){
     fuente: "Sistema Neri"
   };
 
+  // ── Enviar a Make (esperamos respuesta antes de redirigir) ──
   if(WEBHOOK){
-    fetch(WEBHOOK,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)})
-      .catch(e=>console.warn("Make webhook error:",e));
+    try{
+      const resp = await fetch(WEBHOOK,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify(payload),
+        keepalive:true  // garantiza que la petición termine aunque el navegador navegue
+      });
+      if(!resp.ok) console.warn("Make webhook respondió con status:",resp.status);
+    }catch(e){
+      console.warn("Make webhook error:",e);
+    }
   }
 
   // Folio

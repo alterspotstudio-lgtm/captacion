@@ -791,6 +791,9 @@ window.addEventListener("scroll",()=>{
 function onInput(inputId, scoreKey){
   const val = document.getElementById(inputId).value.trim();
   score[scoreKey] = val.length > 0;
+  // Guardar nombre y teléfono globalmente para que completar() los lea aunque el bloque esté oculto
+  if(inputId === 'f_nombre')   window._neri_nombre   = val;
+  if(inputId === 'f_telefono') window._neri_telefono = val;
   updProgress();
 }
 
@@ -895,8 +898,9 @@ function updDiag(){
 function completar(){
   // Meta Pixel: dispara evento Lead al completar el expediente
   try{ if(typeof fbq!=="undefined"){ fbq("track","Lead"); } }catch(e){}
-  const nombre   = document.getElementById("f_nombre").value.trim();
-  const telefono = document.getElementById("f_telefono").value.trim();
+  // Leemos de variables globales porque los campos pueden estar ocultos (display:none) en el stepper
+  const nombre   = window._neri_nombre   || document.getElementById("f_nombre").value.trim();
+  const telefono = window._neri_telefono || document.getElementById("f_telefono").value.trim();
   if(!nombre||!telefono){
     window.scrollTo({top:0,behavior:"smooth"});
     setTimeout(()=>{

@@ -949,6 +949,14 @@ function updDiag(){
 }
 
 // ── COMPLETAR ──
+const docNames = [
+  "Escritura",
+  "Predial",
+  "Agua",
+  "INE",
+  "Régimen matrimonial / poderes"
+];
+
 function completar(){
   // Meta Pixel: dispara evento Lead al completar el expediente
   try{ if(typeof fbq!=="undefined"){ fbq("track","Lead"); } }catch(e){}

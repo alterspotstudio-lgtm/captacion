@@ -1037,48 +1037,12 @@ function completar(){
     estado: "Lead Nuevo", fuente: "Sistema Neri"
   };
 
-  // Email de respaldo
-  var emailBody = [
-    "EXPEDIENTE RECIBIDO - MÉTODO NERI",
-    "Folio: " + payload.folio,
-    "================================",
-    "",
-    "PROPIETARIO",
-    "Nombre: " + payload.nombre,
-    "Telefono: " + payload.telefono,
-    "",
-    "PROPIEDAD",
-    "Tipo: " + (payload.tipo_propiedad||"No especificado"),
-    "Zona: " + (payload.zona||"No especificada"),
-    "Precio estimado: " + (payload.precio_estimado||"No especificado"),
-    "Habitaciones: " + payload.habitaciones,
-    "Baños: " + payload.banos,
-    "Medios baños: " + payload.medios_banos,
-    "Estacionamientos: " + payload.estacionamientos,
-    "",
-    "ESCENARIO DE VENTA",
-    "Tiempo: " + (payload.tiempo_venta||"No especificado"),
-    "Razon: " + (payload.razon_venta||"No especificado"),
-    "",
-    "DOCUMENTOS DISPONIBLES",
-    payload.documentos,
-    "",
-    "DIAGNOSTICO FISCAL",
-    "Estado: " + payload.diagnostico_fiscal,
-    "Detalle: " + payload.diagnostico_detalle,
-    "",
-    "PROGRESO: " + payload.progreso_expediente,
-    "Fuente: Sistema Neri - Cuernavaca"
-  ].join("\n");
-
-  sendEmail(payload.nombre, payload.telefono, emailBody);
-
   setTimeout(function(){
     var msg = encodeURIComponent(
       "Hola, soy " + payload.nombre + ". Folio " + currentFolio + ". Quiero avanzar con la venta de mi propiedad."
     );
     window.location.href = "https://wa.me/" + WA_NUM + "?text=" + msg;
-  }, 4500);
+  }, 500);
 }
 
 

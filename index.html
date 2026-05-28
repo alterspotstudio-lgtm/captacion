@@ -552,18 +552,7 @@ body::before{content:"";position:fixed;inset:0;background-image:url("data:image/
         </select>
       </div>
 
-      <div class="f-sep"></div>
-      <div style="margin-bottom:20px;">
-        <div class="fi-label">Precio estimado</div>
-        <div class="sel-group" id="sg_precio">
-          <div class="sel-item" onclick="selOne(this,'sg_precio','precio')"><div class="sel-dot">✓</div><div class="sel-text"><div class="sel-main">Menos de $1M</div></div><div class="sel-badge pend">Pendiente</div></div>
-          <div class="sel-item" onclick="selOne(this,'sg_precio','precio')"><div class="sel-dot">✓</div><div class="sel-text"><div class="sel-main">$1M - $2M</div></div><div class="sel-badge pend">Pendiente</div></div>
-          <div class="sel-item" onclick="selOne(this,'sg_precio','precio')"><div class="sel-dot">✓</div><div class="sel-text"><div class="sel-main">$2M - $4M</div></div><div class="sel-badge pend">Pendiente</div></div>
-          <div class="sel-item" onclick="selOne(this,'sg_precio','precio')"><div class="sel-dot">✓</div><div class="sel-text"><div class="sel-main">$4M - $7M</div></div><div class="sel-badge pend">Pendiente</div></div>
-          <div class="sel-item" onclick="selOne(this,'sg_precio','precio')"><div class="sel-dot">✓</div><div class="sel-text"><div class="sel-main">Más de $7M</div></div><div class="sel-badge pend">Pendiente</div></div>
-          <div class="sel-item" onclick="selOne(this,'sg_precio','precio')"><div class="sel-dot">✓</div><div class="sel-text"><div class="sel-main">No lo sé aún</div></div><div class="sel-badge pend">Pendiente</div></div>
-        </div>
-      </div>
+
 
       <div class="f-sep"></div>
       <div class="fi-label">Habitaciones</div>
@@ -774,7 +763,7 @@ const WA_NUM = "527779855687";
 // Fiscal × 5 = 5   → TOTAL 20
 const score = {
   sc_nombre:false, sc_telefono:false,
-  sc_tipo:false, sc_zona:false, sc_precio:false,
+  sc_tipo:false, sc_zona:false,
   sc_hab:false, sc_ban:false, sc_est:false,
   sc_tiempo:false, sc_razon:false,
   doc0:false,doc1:false,doc2:false,doc3:false,doc4:false,
@@ -1008,7 +997,7 @@ function completar(){
     fd.append('folio',                currentFolio);
     fd.append('tipo_propiedad',       document.querySelector("#sg_tipo .sel-dot.on")?.parentElement?.querySelector(".sel-main")?.textContent||"");
     fd.append('zona',                 document.getElementById("f_zona").value.trim());
-    fd.append('precio_estimado',      document.querySelector("#sg_precio .sel-dot.on")?.parentElement?.querySelector(".sel-main")?.textContent||"");
+
     fd.append('habitaciones',         String(nv.nv_hab));
     fd.append('banos',                String(nv.nv_ban));
     fd.append('medios_banos',         String(nv.nv_medio_ban));

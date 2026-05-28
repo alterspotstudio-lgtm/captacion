@@ -1012,37 +1012,32 @@ function completar(){
     fd.append('diagnostico_detalle',  text);
     fd.append('progreso_expediente',  calcPct()+"%");
 
+    var waMsg = encodeURIComponent(
+      "Hola, soy " + nombre + ". Folio " + currentFolio + ". Quiero avanzar con la venta de mi propiedad."
+    );
+    var waUrl = "https://wa.me/" + WA_NUM + "?text=" + waMsg;
+
     fetch(WEBHOOK, {
       method: 'POST',
       body: fd
     }).then(function(r){
       if(!r.ok) console.warn("Make webhook respondió con status:", r.status);
       else console.log("Make webhook OK");
-    }).catch(function(e){ console.warn("Make webhook error:", e); });
-  }
+    }).catch(function(e){
+      console.warn("Make webhook error:", e);
+    }).finally(function(){
+      window.location.href = waUrl;
+    });
 
-  // payload para uso interno (folio, email, WhatsApp)
-  var payload = {
-    folio: currentFolio,
-    nombre: nombre, telefono: telefono,
-    tipo_propiedad: document.querySelector("#sg_tipo .sel-dot.on")?.parentElement?.querySelector(".sel-main")?.textContent||"",
-    zona: document.getElementById("f_zona").value.trim(),
-    precio_estimado: document.querySelector("#sg_precio .sel-dot.on")?.parentElement?.querySelector(".sel-main")?.textContent||"",
-    habitaciones: nv.nv_hab, banos: nv.nv_ban, medios_banos: nv.nv_medio_ban, estacionamientos: nv.nv_est,
-    tiempo_venta: document.querySelector("#sg_tiempo .sel-dot.on")?.parentElement?.querySelector(".sel-main")?.textContent||"",
-    razon_venta: document.querySelector("#sg_razon .sel-dot.on")?.parentElement?.querySelector(".sel-main")?.textContent||"",
-    documentos: [0,1,2,3,4].filter(i=>score["doc"+i]).map(i=>docNames[i]).join(", ")||"Ninguno",
-    diagnostico_fiscal: status, diagnostico_detalle: text,
-    progreso_expediente: calcPct()+"%",
-    estado: "Lead Nuevo", fuente: "Sistema Neri"
-  };
-
-  setTimeout(function(){
-    var msg = encodeURIComponent(
-      "Hola, soy " + payload.nombre + ". Folio " + currentFolio + ". Quiero avanzar con la venta de mi propiedad."
+  } else {
+    // Sin webhook: redirigir a WhatsApp directamente
+    var waMsg = encodeURIComponent(
+      "Hola, soy " + nombre + ". Folio " + currentFolio + ". Quiero avanzar con la venta de mi propiedad."
     );
-    window.location.href = "https://wa.me/" + WA_NUM + "?text=" + msg;
-  }, 500);
+    setTimeout(function(){
+      window.location.href = "https://wa.me/" + WA_NUM + "?text=" + waMsg;
+    }, 400);
+  }
 }
 
 

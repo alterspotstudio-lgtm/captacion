@@ -1205,26 +1205,36 @@ goTo = function(sec){
 // Init
 updProgress(); updDiag(); goTo("presentacion");
 
-/* === Metodo Neri · personalizacion por asesor (usa la consulta del pixel, sin doble llamada) === */
+/* === Metodo Neri · personalizacion por asesor (1 sola consulta) === */
 (function(){
-  if(!window.__neriP) return; // sin ?asesor= queda el asesor por defecto
+  if(!window.__neriP) return;
+  function casita(){var s="<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='#C6A86B' stroke-width='1.5'><path d='M3 11l9-7 9 7'/><path d='M5 10v9h14v-9'/></svg>";return 'data:image/svg+xml,'+encodeURIComponent(s);}
   window.__neriP.then(function(d){
     if(!d||!d.nombre) return;
     var partes=String(d.nombre).trim().split(/\s+/);
     var first=partes[0]||''; var resto=partes.slice(1).join(' ');
-    var nombreUP=String(d.nombre).toUpperCase();
-    var ciudadUP=(d.ciudad||'').toUpperCase();
+    var nombreUP=String(d.nombre).toUpperCase(); var ciudadUP=(d.ciudad||'').toUpperCase();
     var linea=ciudadUP?(nombreUP+' \u00B7 '+ciudadUP):nombreUP;
-    var sn=document.querySelector('.s1-name');
-    if(sn) sn.innerHTML=first.toUpperCase()+(resto?('<span>'+resto.toUpperCase()+'</span>'):'');
+    // Nombre grande
+    var sn=document.querySelector('.s1-name'); if(sn) sn.innerHTML=first.toUpperCase()+(resto?('<span>'+resto.toUpperCase()+'</span>'):'');
+    // Ciudad del slide 1 (.s1-tag span)
+    var tg=document.querySelector('.s1-tag span'); if(tg&&d.ciudad) tg.textContent=d.ciudad;
+    // Nombre + ciudad (junto a CTA y pantalla final)
     document.querySelectorAll('.c-neri span, .ef-neri').forEach(function(el){ el.textContent=linea; });
+    // Frase final "Enrique ya tiene..." -> nombre del asesor
+    var eb=document.querySelector('.ef-body'); if(eb) eb.innerHTML=eb.innerHTML.replace(/Enrique/g, first);
+    // Foto
     var av=document.querySelector('.s1-avatar img'); if(av&&d.foto) av.src=d.foto;
+    // WhatsApp + nombre del boton
     if(d.telefono){ var tel=String(d.telefono).replace(/\D/g,''); try{WA_NUM=tel;}catch(e){}
       document.querySelectorAll('a[href*="wa.me"]').forEach(function(a){ a.href=a.href.replace(/wa\.me\/\d+/, 'wa.me/'+tel); }); }
     document.querySelectorAll('.c-cta-secondary').forEach(function(a){ a.textContent='Hablar con '+first+' ahora'; });
-    var esIndep=(d.independiente===true||d.independiente==='true');
-    var logoImg=document.querySelector('.c-neri img');
-    if(logoImg){ if(esIndep){ logoImg.outerHTML='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="1.4" style="opacity:.28"><path d="M3 11l9-7 9 7"/><path d="M5 10v9h14v-9"/></svg>'; } else if(d.logo){ logoImg.src=d.logo; } }
+    // LOGOS (los 3): casita si independiente, o logo de inmobiliaria. Se cambia el src y se respeta su CSS.
+    var indepRaw=(d.independiente==null?'':String(d.independiente)).toLowerCase();
+    var esIndep=(indepRaw && indepRaw!=='false' && indepRaw!=='0');
+    document.querySelectorAll('.nav-logo, .s1-tag img, .c-neri img').forEach(function(img){
+      if(esIndep){ img.src=casita(); } else if(d.logo){ img.src=d.logo; }
+    });
     document.querySelectorAll('[data-neri]').forEach(function(el){var k=el.getAttribute('data-neri'); if(d[k]) el.textContent=d[k];});
   });
 })();

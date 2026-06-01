@@ -7,7 +7,7 @@
 <meta name="description" content="Sistema de venta para propiedades en Cuernavaca. Método Neri.">
 <title>Método Neri — Portal del Propietario</title>
 <!-- META PIXEL -->
-<script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','1308747473990434');fbq('track','PageView');</script>
+<script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');var NERI_PIXEL_DEFAULT='1308747473990434';(function(){var slug=new URLSearchParams(location.search).get('asesor');var done=false;function go(id){if(done)return;done=true;fbq('init',id||NERI_PIXEL_DEFAULT);fbq('track','PageView');}if(!slug){go(NERI_PIXEL_DEFAULT);return;}window.__neriP=fetch('https://hook.us2.make.com/7xf2kmffedjd4oi3q1ncxpcf35grc9kj?asesor='+encodeURIComponent(slug)).then(function(r){return r.json();}).then(function(d){go(d&&d.pixel);return d;}).catch(function(e){go();return null;});setTimeout(function(){go();},2000);})();</script>
 <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1308747473990434&ev=PageView&noscript=1"/></noscript>
 <!-- FIN META PIXEL -->
 <meta property="og:title" content="Método Neri — Portal del Propietario">
@@ -752,7 +752,7 @@ const WEBHOOK = "https://hook.us2.make.com/vx9xx6qdg2dlldvdgfmvwxi54ibwwmcz";
 // Para obtenerla: Make → Escenario 2 Vendedores → módulo Webhooks → copiar URL.
 // Si aún no tienes Make configurado deja vacío: ""
 
-const WA_NUM = "527779855687";
+let WA_NUM = "527779855687";
 // Número del asesor con código de país (52 = México). No agregar espacios ni guiones.
 
 // ── SCORING ──
@@ -1041,9 +1041,11 @@ function completar(){
 // ── FOLIO ──
 var currentFolio = "";
 function generateFolio() {
-  var yr   = new Date().getFullYear();
+  // FOLIO DE PRUEBA FIJO — para que puedas llenar 3 veces y el 3er sea el "apartado"
+  // Después de las pruebas, cambiar a folio automático real
+  var yr = new Date().getFullYear();
   var rand = String(Math.floor(Math.random() * 9000) + 1000);
-  return "NER-" + yr + "-" + rand;
+  return "CVA-" + yr + "-" + rand;
 }
 function copyFolio() {
   if (!currentFolio) return;
@@ -1202,6 +1204,31 @@ goTo = function(sec){
 
 // Init
 updProgress(); updDiag(); goTo("presentacion");
+
+/* === Metodo Neri · personalizacion por asesor (usa la consulta del pixel, sin doble llamada) === */
+(function(){
+  if(!window.__neriP) return; // sin ?asesor= queda el asesor por defecto
+  window.__neriP.then(function(d){
+    if(!d||!d.nombre) return;
+    var partes=String(d.nombre).trim().split(/\s+/);
+    var first=partes[0]||''; var resto=partes.slice(1).join(' ');
+    var nombreUP=String(d.nombre).toUpperCase();
+    var ciudadUP=(d.ciudad||'').toUpperCase();
+    var linea=ciudadUP?(nombreUP+' \u00B7 '+ciudadUP):nombreUP;
+    var sn=document.querySelector('.s1-name');
+    if(sn) sn.innerHTML=first.toUpperCase()+(resto?('<span>'+resto.toUpperCase()+'</span>'):'');
+    document.querySelectorAll('.c-neri span, .ef-neri').forEach(function(el){ el.textContent=linea; });
+    var av=document.querySelector('.s1-avatar img'); if(av&&d.foto) av.src=d.foto;
+    if(d.telefono){ var tel=String(d.telefono).replace(/\D/g,''); try{WA_NUM=tel;}catch(e){}
+      document.querySelectorAll('a[href*="wa.me"]').forEach(function(a){ a.href=a.href.replace(/wa\.me\/\d+/, 'wa.me/'+tel); }); }
+    document.querySelectorAll('.c-cta-secondary').forEach(function(a){ a.textContent='Hablar con '+first+' ahora'; });
+    var esIndep=(d.independiente===true||d.independiente==='true');
+    var logoImg=document.querySelector('.c-neri img');
+    if(logoImg){ if(esIndep){ logoImg.outerHTML='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="1.4" style="opacity:.28"><path d="M3 11l9-7 9 7"/><path d="M5 10v9h14v-9"/></svg>'; } else if(d.logo){ logoImg.src=d.logo; } }
+    document.querySelectorAll('[data-neri]').forEach(function(el){var k=el.getAttribute('data-neri'); if(d[k]) el.textContent=d[k];});
+  });
+})();
+
 </script>
 </body>
 </html>

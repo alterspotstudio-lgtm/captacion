@@ -43,7 +43,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content
 .slide.visible{opacity:1;transform:translateY(0);}
 .slide-1{position:relative;background:#0B0B0B;justify-content:flex-end;padding-bottom:60px;min-height:100vh;isolation:isolate;}
 .slide-1::before{content:"";position:absolute;top:0;left:0;right:0;height:65%;background:linear-gradient(180deg,rgba(198,168,107,0.07) 0%,transparent 100%);}
-.s1-avatar{position:absolute;top:0;right:0;width:100%;height:72%;overflow:hidden;}
+.s1-avatar{position:absolute;top:0;right:0;width:100%;height:72%;overflow:hidden;opacity:0;transition:opacity .28s ease;}
+.s1-avatar.ready{opacity:1;}
 .s1-avatar::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#0B0B0B 0%,#0B0B0B 12%,transparent 52%),linear-gradient(180deg,transparent 56%,#0B0B0B 100%);pointer-events:none;}
 .s1-avatar img{height:100%;width:auto;object-fit:contain;object-position:right top;display:block;margin-left:auto;}
 .s1-line{width:40px;height:2px;background:var(--gold);margin-bottom:22px;}
@@ -360,6 +361,28 @@ body::before{content:"";position:fixed;inset:0;background-image:url("data:image/
   <div class="slide slide-1" data-slide="0">
     <button onclick="goTo('expediente')" style="position:absolute;top:16px;right:16px;font-family:'Montserrat',sans-serif;font-size:8px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.18);background:transparent;border:none;cursor:pointer;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.1);-webkit-appearance:none;z-index:10;">Abrir expediente →</button>
     <div class="s1-avatar" style="display:none;"><img src="" alt="Asesor inmobiliario"></div>
+    <script>
+    // Carga temprana de foto del asesor: evita esperar a que termine todo el HTML/formulario.
+    (function(){
+      if(!window.__neriP) return;
+      window.__neriP.then(function(d){
+        if(!d || !d.foto) return;
+        var wrap=document.querySelector('.s1-avatar');
+        var img=document.querySelector('.s1-avatar img');
+        if(!wrap || !img || img.getAttribute('data-foto-lista')==='1') return;
+        img.alt=d.nombre||'Asesor inmobiliario';
+        img.setAttribute('fetchpriority','high');
+        img.setAttribute('decoding','async');
+        img.onload=function(){
+          img.setAttribute('data-foto-lista','1');
+          wrap.style.display='block';
+          wrap.classList.add('ready');
+        };
+        img.src=d.foto;
+        if(img.complete && img.naturalWidth>0){ img.onload(); }
+      });
+    })();
+    </script>
     <div class="s1-line fu"></div>
     <div class="s1-tag fu d1"><img style="display:none;" src="" alt="Logo empresa"><span data-neri="ciudad">CIUDAD</span></div>
     <div class="s1-name fu d2">ASESOR<span>INMOBILIARIO</span></div>
@@ -1159,10 +1182,16 @@ updProgress(); updDiag(); goTo("presentacion");
     // Foto: plantilla blanca. No carga foto base; solo muestra la del asesor si Airtable/Make la envía.
     var avWrap=document.querySelector('.s1-avatar');
     var av=document.querySelector('.s1-avatar img');
-    if(av&&d.foto){
-      av.src=d.foto;
+    if(av&&d.foto&&av.getAttribute('data-foto-lista')!=='1'){
       av.alt=d.nombre||'Asesor inmobiliario';
-      if(avWrap) avWrap.style.display='block';
+      av.setAttribute('fetchpriority','high');
+      av.setAttribute('decoding','async');
+      av.onload=function(){
+        av.setAttribute('data-foto-lista','1');
+        if(avWrap){ avWrap.style.display='block'; avWrap.classList.add('ready'); }
+      };
+      av.src=d.foto;
+      if(av.complete&&av.naturalWidth>0){ av.onload(); }
     }
     // WhatsApp + nombre del boton
     if(d.telefono){ var tel=String(d.telefono).replace(/\D/g,''); try{WA_NUM=tel;}catch(e){}

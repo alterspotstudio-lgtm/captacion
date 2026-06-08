@@ -984,17 +984,16 @@ function completar(){
     );
     var waUrl = "https://wa.me/" + WA_NUM + "?text=" + waMsg;
 
-    fetch(WEBHOOK, {
-      method: 'POST',
-      body: fd
-    }).then(function(r){
-      if(!r.ok) console.warn("Make webhook respondió con status:", r.status);
-      else console.log("Make webhook OK");
-    }).catch(function(e){
-      console.warn("Make webhook error:", e);
-    }).finally(function(){
+    // sendBeacon garantiza entrega aunque el navegador cambie de pagina (mobile)
+    var enviado = false;
+    try { enviado = navigator.sendBeacon(WEBHOOK, fd); } catch(e) {}
+    if(enviado){
       window.location.href = waUrl;
-    });
+    } else {
+      fetch(WEBHOOK, { method:'POST', body:fd, keepalive:true })
+        .catch(function(){})
+        .finally(function(){ window.location.href = waUrl; });
+    }
 
   } else {
     // Sin webhook: redirigir a WhatsApp directamente

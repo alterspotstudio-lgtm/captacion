@@ -1207,6 +1207,8 @@ updProgress(); updDiag(); goTo("presentacion");
       else { img.removeAttribute('src'); img.style.display='none'; }
     });
     document.querySelectorAll('[data-neri]').forEach(function(el){var k=el.getAttribute('data-neri'); if(d[k]) el.textContent=d[k];});
+    // Frase pública del asesor → slide 1 tagline
+    if(d.frase){ var tl=document.querySelector('.s1-tagline'); if(tl) tl.innerHTML=d.frase; }
   });
 })();
 

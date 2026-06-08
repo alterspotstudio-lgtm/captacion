@@ -511,6 +511,19 @@ body::before{content:"";position:fixed;inset:0;background-image:url("data:image/
 
 
       <div class="f-sep"></div>
+      <div style="margin-bottom:20px;">
+        <div class="fi-label">¿En cuánto estimas vender?</div>
+        <div class="sel-group" id="sg_precio">
+          <div class="sel-item" onclick="selOne(this,'sg_precio','precio')"><div class="sel-dot">✓</div><div class="sel-text"><div class="sel-main">Menos de $1M</div></div><div class="sel-badge pend">Pendiente</div></div>
+          <div class="sel-item" onclick="selOne(this,'sg_precio','precio')"><div class="sel-dot">✓</div><div class="sel-text"><div class="sel-main">$1M – $2M</div></div><div class="sel-badge pend">Pendiente</div></div>
+          <div class="sel-item" onclick="selOne(this,'sg_precio','precio')"><div class="sel-dot">✓</div><div class="sel-text"><div class="sel-main">$2M – $4M</div></div><div class="sel-badge pend">Pendiente</div></div>
+          <div class="sel-item" onclick="selOne(this,'sg_precio','precio')"><div class="sel-dot">✓</div><div class="sel-text"><div class="sel-main">$4M – $7M</div></div><div class="sel-badge pend">Pendiente</div></div>
+          <div class="sel-item" onclick="selOne(this,'sg_precio','precio')"><div class="sel-dot">✓</div><div class="sel-text"><div class="sel-main">Más de $7M</div></div><div class="sel-badge pend">Pendiente</div></div>
+          <div class="sel-item" onclick="selOne(this,'sg_precio','precio')"><div class="sel-dot">✓</div><div class="sel-text"><div class="sel-main">No lo sé aún</div></div><div class="sel-badge pend">Pendiente</div></div>
+        </div>
+      </div>
+
+      <div class="f-sep"></div>
       <div class="fi-label">Habitaciones</div>
       <div class="num-row" style="margin-bottom:16px;">
         <button class="num-btn" onclick="stepNum('nv_hab',-1)">−</button>
@@ -719,7 +732,7 @@ let WA_NUM = "527779855687";
 // Fiscal × 5 = 5   → TOTAL 20
 const score = {
   sc_nombre:false, sc_telefono:false,
-  sc_tipo:false, sc_zona:false,
+  sc_tipo:false, sc_zona:false, sc_precio:false,
   sc_hab:false, sc_ban:false, sc_est:false,
   sc_tiempo:false, sc_razon:false,
   doc0:false,doc1:false,doc2:false,doc3:false,doc4:false,
@@ -953,6 +966,7 @@ function completar(){
     fd.append('folio',                currentFolio);
     fd.append('tipo_propiedad',       document.querySelector("#sg_tipo .sel-dot.on")?.parentElement?.querySelector(".sel-main")?.textContent||"");
     fd.append('zona',                 document.getElementById("f_zona").value.trim());
+    fd.append('precio_estimado',      document.querySelector("#sg_precio .sel-dot.on")?.parentElement?.querySelector(".sel-main")?.textContent||"");
 
     fd.append('habitaciones',         String(nv.nv_hab));
     fd.append('banos',                String(nv.nv_ban));
@@ -970,17 +984,16 @@ function completar(){
     );
     var waUrl = "https://wa.me/" + WA_NUM + "?text=" + waMsg;
 
-    fetch(WEBHOOK, {
-      method: 'POST',
-      body: fd
-    }).then(function(r){
-      if(!r.ok) console.warn("Make webhook respondió con status:", r.status);
-      else console.log("Make webhook OK");
-    }).catch(function(e){
-      console.warn("Make webhook error:", e);
-    }).finally(function(){
+    // sendBeacon garantiza entrega aunque el navegador cambie de pagina (mobile)
+    var enviado = false;
+    try { enviado = navigator.sendBeacon(WEBHOOK, fd); } catch(e) {}
+    if(enviado){
       window.location.href = waUrl;
-    });
+    } else {
+      fetch(WEBHOOK, { method:'POST', body:fd, keepalive:true })
+        .catch(function(){})
+        .finally(function(){ window.location.href = waUrl; });
+    }
 
   } else {
     // Sin webhook: redirigir a WhatsApp directamente

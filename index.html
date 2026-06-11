@@ -978,6 +978,8 @@ function completar(){
     fd.append('diagnostico_fiscal',   status);
     fd.append('diagnostico_detalle',  text);
     fd.append('progreso_expediente',  calcPct()+"%");
+    // Atribución multi-asesor: slug desde la URL (?asesor=...). Make resuelve slug → nombre real.
+    fd.append('asesor',               (new URLSearchParams(location.search).get('asesor')||'').trim());
 
     var waMsg = encodeURIComponent(
       "Hola, soy " + nombre + ". Folio " + currentFolio + ". Quiero avanzar con la venta de mi propiedad."

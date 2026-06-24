@@ -466,7 +466,7 @@ body::before{content:"";position:fixed;inset:0;background-image:url("data:image/
         <label class="fi-label">Teléfono</label>
         <input class="fi-input" type="tel" id="f_telefono" placeholder="10 dígitos" autocomplete="tel" oninput="onInput('f_telefono','sc_telefono')">
       </div>
-      <div class="step-lock-msg" id="identityLockMsg">Para abrir el siguiente bloque, registra nombre y teléfono.</div>
+      <div class="step-lock-msg" id="identityLockMsg">Para abrir el siguiente bloque, registra nombre y teléfono válidos (10 dígitos).</div>
     </div>
 
     <!-- BLOQUE 2: PROPIEDAD -->
@@ -488,7 +488,7 @@ body::before{content:"";position:fixed;inset:0;background-image:url("data:image/
       <div class="f-sep"></div>
       <div class="fi" style="margin-bottom:20px;">
         <label class="fi-label">Municipio</label>
-        <select class="fi-input" id="f_zona" onchange="onInput('f_zona','sc_zona')" style="background:#111;color:#fff;appearance:none;-webkit-appearance:none;cursor:pointer;padding-right:32px;background-image:url('data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'8\' viewBox=\'0 0 12 8\'><path fill=\'rgba(198,168,107,0.6)\' d=\'M6 8L0 0h12z\'/></svg>');background-repeat:no-repeat;background-position:right 12px center;">
+        <select class="fi-input" id="f_zona" onchange="onInput('f_zona','sc_zona');if(typeof updateStepNav==='function')updateStepNav();" style="background:#111;color:#fff;appearance:none;-webkit-appearance:none;cursor:pointer;padding-right:32px;background-image:url('data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'8\' viewBox=\'0 0 12 8\'><path fill=\'rgba(198,168,107,0.6)\' d=\'M6 8L0 0h12z\'/></svg>');background-repeat:no-repeat;background-position:right 12px center;">
           <option value="" disabled selected style="color:rgba(255,255,255,0.35)">— Selecciona tu municipio —</option>
           <option value="Cuernavaca">Cuernavaca</option>
           <option value="Temixco">Temixco</option>
@@ -551,6 +551,7 @@ body::before{content:"";position:fixed;inset:0;background-image:url("data:image/
         <div class="num-val" id="nv_est">0</div>
         <button class="num-btn" onclick="stepNum('nv_est',1)">+</button>
       </div>
+      <div class="step-lock-msg" id="propiedadLockMsg">Para continuar, selecciona el tipo de propiedad y el municipio.</div>
     </div>
 
     <!-- BLOQUE 3: ESCENARIO -->
@@ -579,6 +580,7 @@ body::before{content:"";position:fixed;inset:0;background-image:url("data:image/
           <div class="sel-item" onclick="selOne(this,'sg_razon','razon')"><div class="sel-dot">✓</div><div class="sel-text"><div class="sel-main">Otro</div></div><div class="sel-badge pend">Pendiente</div></div>
         </div>
       </div>
+      <div class="step-lock-msg" id="escenarioLockMsg">Para continuar, indica en cuánto tiempo deseas vender.</div>
     </div>
 
     <!-- BLOQUE 4: DOCUMENTOS -->
@@ -669,6 +671,7 @@ body::before{content:"";position:fixed;inset:0;background-image:url("data:image/
         <div class="df-title">Antes de vender, nos aseguramos de que no pierdas dinero.</div>
         <div class="df-sub">Este diagnóstico es el primer paso del Método Neri. Sin esto, cualquier proceso de venta es un riesgo innecesario.</div>
       </div>
+      <div class="step-lock-msg" id="diagnosticoLockMsg">Para completar tu expediente, responde al menos 3 de las 5 preguntas del diagnóstico fiscal.</div>
     </div>
 
   </div><!-- /exp-inner -->
@@ -801,10 +804,13 @@ window.addEventListener("scroll",()=>{
 // ── TEXT INPUTS ──
 function onInput(inputId, scoreKey){
   const val = document.getElementById(inputId).value.trim();
-  score[scoreKey] = val.length > 0;
-  // Guardar nombre y teléfono globalmente para que completar() los lea aunque el bloque esté oculto
-  if(inputId === 'f_nombre')   window._neri_nombre   = val;
-  if(inputId === 'f_telefono') window._neri_telefono = val;
+  if(inputId === 'f_telefono'){
+    score[scoreKey] = isTelefonoValido(val);
+    window._neri_telefono = val;
+  } else {
+    score[scoreKey] = val.length > 0;
+    if(inputId === 'f_nombre') window._neri_nombre = val;
+  }
   updProgress();
   if(typeof updateStepNav === 'function') updateStepNav();
 }
@@ -825,6 +831,7 @@ function selOne(el, groupId, key){
   badge.textContent="Listo"; badge.className="sel-badge listo";
   score["sc_"+key] = true;
   updProgress();
+  if(typeof updateStepNav === 'function') updateStepNav();
 }
 
 // ── STEPPERS ──
@@ -892,6 +899,7 @@ function togDiag(el,idx,alertOnTrue){
   }
   updProgress();
   updDiag();
+  if(typeof updateStepNav === 'function') updateStepNav();
 }
 
 function updDiag(){
@@ -1085,27 +1093,94 @@ function initSteps(){
   updateStepNav();
 }
 
+// ── VALIDACIONES POR BLOQUE ──
+
+function isTelefonoValido(val){
+  return /^\d{10}$/.test(val.replace(/[\s\-\(\)]/g,''));
+}
+
 function isIdentityComplete(){
   var nombre = (window._neri_nombre || document.getElementById('f_nombre').value || '').trim();
   var telefono = (window._neri_telefono || document.getElementById('f_telefono').value || '').trim();
-  return nombre.length > 0 && telefono.length > 0;
+  return nombre.length > 0 && isTelefonoValido(telefono);
 }
 
-function markIdentityAttention(){
-  var nombreEl = document.getElementById('f_nombre');
-  var telEl = document.getElementById('f_telefono');
-  var msg = document.getElementById('identityLockMsg');
-  if(!isIdentityComplete()){
-    if(!(nombreEl.value || '').trim()) nombreEl.classList.add('need-attention');
-    if(!(telEl.value || '').trim()) telEl.classList.add('need-attention');
-    if(msg) msg.classList.add('show');
-    setTimeout(function(){
-      nombreEl.classList.remove('need-attention');
-      telEl.classList.remove('need-attention');
-    }, 2200);
-  } else if(msg) {
-    msg.classList.remove('show');
+function isPropiedadComplete(){
+  var tipoSel = document.querySelector('#sg_tipo .sel-dot.on');
+  var zona = document.getElementById('f_zona').value.trim();
+  return tipoSel !== null && zona.length > 0;
+}
+
+function isEscenarioComplete(){
+  var tiempoSel = document.querySelector('#sg_tiempo .sel-dot.on');
+  return tiempoSel !== null;
+}
+
+function isDiagnosticoComplete(){
+  var respondidas = dg.filter(function(v){ return v !== null; }).length;
+  return respondidas >= 3;
+}
+
+function isStepComplete(step){
+  if(step === 1) return isIdentityComplete();
+  if(step === 2) return isPropiedadComplete();
+  if(step === 3) return isEscenarioComplete();
+  if(step === 5) return isDiagnosticoComplete();
+  return true; // bloque 4 (documentos) no bloquea
+}
+
+function markStepAttention(step){
+  if(step === 1){
+    var nombreEl = document.getElementById('f_nombre');
+    var telEl = document.getElementById('f_telefono');
+    var msg = document.getElementById('identityLockMsg');
+    if(!isIdentityComplete()){
+      if(!(nombreEl.value||'').trim()) nombreEl.classList.add('need-attention');
+      var telVal = (window._neri_telefono || telEl.value || '').trim();
+      if(!isTelefonoValido(telVal)) telEl.classList.add('need-attention');
+      if(msg) msg.classList.add('show');
+      setTimeout(function(){
+        nombreEl.classList.remove('need-attention');
+        telEl.classList.remove('need-attention');
+      }, 2400);
+    } else if(msg){ msg.classList.remove('show'); }
   }
+  if(step === 2){
+    var msg2 = document.getElementById('propiedadLockMsg');
+    if(!isPropiedadComplete()){
+      if(msg2) msg2.classList.add('show');
+      if(!document.querySelector('#sg_tipo .sel-dot.on')){
+        document.querySelectorAll('#sg_tipo .sel-item').forEach(function(it){
+          it.style.borderColor='rgba(255,90,90,0.4)';
+          setTimeout(function(){ it.style.borderColor=''; }, 2400);
+        });
+      }
+      var zonaEl = document.getElementById('f_zona');
+      if(!zonaEl.value.trim()){ zonaEl.classList.add('need-attention'); setTimeout(function(){ zonaEl.classList.remove('need-attention'); }, 2400); }
+    } else if(msg2){ msg2.classList.remove('show'); }
+  }
+  if(step === 3){
+    var msg3 = document.getElementById('escenarioLockMsg');
+    if(!isEscenarioComplete()){
+      if(msg3) msg3.classList.add('show');
+      document.querySelectorAll('#sg_tiempo .sel-item').forEach(function(it){
+        it.style.borderColor='rgba(255,90,90,0.4)';
+        setTimeout(function(){ it.style.borderColor=''; }, 2400);
+      });
+    } else if(msg3){ msg3.classList.remove('show'); }
+  }
+  if(step === 5){
+    var msg5 = document.getElementById('diagnosticoLockMsg');
+    if(!isDiagnosticoComplete()){
+      if(msg5) msg5.classList.add('show');
+    } else if(msg5){ msg5.classList.remove('show'); }
+  }
+}
+
+function clearStepMsg(step){
+  var ids = ['identityLockMsg','propiedadLockMsg','escenarioLockMsg',null,'diagnosticoLockMsg'];
+  var id = ids[step-1];
+  if(id){ var m = document.getElementById(id); if(m) m.classList.remove('show'); }
 }
 
 function updateStepNav(){
@@ -1121,7 +1196,7 @@ function updateStepNav(){
   back.style.visibility = currentStep === 1 ? 'hidden' : 'visible';
   if(ind) ind.textContent = currentStep + ' / ' + TOTAL_STEPS;
 
-  var locked = currentStep === 1 && !isIdentityComplete();
+  var locked = !isStepComplete(currentStep);
   next.classList.toggle('locked', locked);
   next.setAttribute('aria-disabled', locked ? 'true' : 'false');
 
@@ -1135,12 +1210,11 @@ function updateStepNav(){
 }
 
 function stepNext(){
-  if(currentStep === 1 && !isIdentityComplete()){
-    markIdentityAttention();
+  if(!isStepComplete(currentStep)){
+    markStepAttention(currentStep);
     return;
   }
-  var msg = document.getElementById('identityLockMsg');
-  if(msg) msg.classList.remove('show');
+  clearStepMsg(currentStep);
   if(currentStep === TOTAL_STEPS){
     completar();
     return;

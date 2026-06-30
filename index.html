@@ -985,6 +985,11 @@ function completar(){
     fd.append('documentos',           [0,1,2,3,4].filter(i=>score["doc"+i]).map(i=>docNames[i]).join(", ")||"Ninguno");
     fd.append('diagnostico_fiscal',   status);
     fd.append('diagnostico_detalle',  text);
+    // Capa B: además del estatus agregado, mandamos las dos respuestas fiscales individuales
+    // para pre-llenar los campos editables de caso en Leads Vendedores.
+    // P4 casa habitación (dg[4]) -> Exención ISR ; P3 vendió en 3 años (dg[3]) -> Riesgo fiscal.
+    fd.append('exencion_isr',  dg[4]===true ? 'Aplica' : (dg[4]===false ? 'No acreditada' : 'Por confirmar'));
+    fd.append('riesgo_fiscal', dg[3]===true ? 'true' : '');
     fd.append('progreso_expediente',  calcPct()+"%");
     // Atribución multi-asesor: slug desde la URL (?asesor=...). Make resuelve slug → nombre real.
     fd.append('asesor',               (new URLSearchParams(location.search).get('asesor')||'').trim());
